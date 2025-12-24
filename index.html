@@ -1,204 +1,242 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Inventory System</title>
+<meta charset="UTF-8">
+<title>Inventory Dashboard</title>
+<style>
+  
+  * { box-sizing: border-box; margin:0; padding:0; font-family: 'Poppins', 'Segoe UI', 'Roboto', sans-serif; }
+  body { background: #f4f6f8; color: #1f2937; font-size: 16px; }
+  button { cursor: pointer; transition: all 0.3s; font-family: inherit; font-weight: 500; }
 
-  <!-- AWS Amplify -->
-  <script src="https://unpkg.com/aws-amplify@5.3.18/dist/aws-amplify.min.js"></script>
+  input, select { 
+    padding: 12px; 
+    border: 1px solid #d1d5db; 
+    border-radius: 8px; 
+    width: 100%; 
+    font-family: inherit; 
+    font-size: 16px; 
+    transition: border-color 0.3s, box-shadow 0.3s;
+  }
+  input:focus, select:focus { border-color: #4f46e5; box-shadow: 0 0 8px rgba(79,70,229,0.2); outline: none; }
 
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f4f6f8;
-      margin: 0;
-    }
-    header {
-      background: #1e293b;
-      color: white;
-      padding: 15px;
-      text-align: center;
-      font-size: 22px;
-    }
-    .container {
-      max-width: 900px;
-      margin: 20px auto;
-      background: white;
-      padding: 20px;
-      border-radius: 8px;
-    }
-    input, button {
-      padding: 10px;
-      margin: 5px 0;
-      width: 100%;
-    }
-    button {
-      background: #2563eb;
-      color: white;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-    }
-    table {
-      width: 100%;
-      margin-top: 15px;
-      border-collapse: collapse;
-    }
-    th, td {
-      border: 1px solid #ddd;
-      padding: 8px;
-      text-align: center;
-    }
-    .danger {
-      background: #dc2626;
-    }
-    .hidden {
-      display: none;
-    }
-  </style>
+  
+  .page-header {
+    font-size: 38px;
+    font-weight: 800;
+    margin-bottom: 30px;
+    text-align: left;
+    animation: fadeInScale 1s ease forwards;
+  }
+  .page-header span.highlight {
+    font-weight: 900;
+    background: linear-gradient(90deg, #f97316, #facc15);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  @keyframes fadeInScale {
+    0% { opacity: 0; transform: scale(0.8); }
+    100% { opacity: 1; transform: scale(1); }
+  }
+
+ 
+  .container { max-width: 1100px; margin: 0 auto; padding: 0 20px; }
+
+ 
+  .section { 
+    background: #ffffff; 
+    border-radius: 12px; 
+    padding: 20px; 
+    margin-bottom: 20px; 
+    box-shadow: 0 3px 10px rgba(0,0,0,0.05); 
+    transition: transform 0.3s, box-shadow 0.3s;
+  }
+  .section:hover { transform: translateY(-2px); box-shadow: 0 6px 15px rgba(0,0,0,0.1); }
+  .section h2 { margin-bottom: 15px; font-size: 20px; color: #111827; font-weight: 600; }
+
+ 
+  .stock-panel { display: flex; flex-wrap: wrap; gap: 15px; margin-bottom: 20px; padding: 15px; border-radius: 12px; background: #e5e7eb; }
+  .stock-item { 
+    flex: 1; 
+    min-width: 120px; 
+    text-align: center; 
+    background: #f3f4f6; 
+    border-radius: 12px; 
+    padding: 20px; 
+    box-shadow: 0 2px 6px rgba(0,0,0,0.05); 
+    transition: transform 0.3s, box-shadow 0.3s, background 0.3s;
+    cursor: default;
+    animation: fadeInUp 0.5s ease forwards;
+  }
+  .stock-item:hover { transform: translateY(-4px); box-shadow: 0 6px 12px rgba(0,0,0,0.15); background: #eef2ff; }
+  .stock-item h3 { font-size: 22px; font-weight: 700; margin-bottom: 5px; color: #111827; }
+
+  @keyframes fadeInUp {
+    0% { opacity: 0; transform: translateY(20px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+
+ 
+.btn { 
+    padding: 0 20px;
+    min-width: 120px;
+    background: #1f2937; 
+    color: white; 
+    border: none; 
+    border-radius: 8px; 
+    font-weight: 600; 
+    font-size: 16px; 
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    flex-shrink: 0;
+}
+.btn:hover { 
+    background: #374151; 
+    transform: translateY(-2px); 
+    box-shadow: 0 6px 12px rgba(0,0,0,0.3); 
+}
+
+  
+  .input-group { display: flex; gap: 10px; margin-bottom: 15px; }
+  .input-group input, .input-group select { flex: 1; }
+
+  
+  #toast { 
+    position: fixed; bottom: 30px; right: 30px; background: #111827; 
+    color: white; padding: 15px 25px; border-radius: 8px; 
+    opacity: 0; pointer-events: none; transform: translateY(20px);
+    transition: all 0.4s ease; box-shadow: 0 4px 12px rgba(0,0,0,0.2); z-index: 200; 
+  }
+  #toast.show { opacity: 1; pointer-events: auto; transform: translateY(0); }
+</style>
 </head>
-
 <body>
 
-<header>Inventory Management System</header>
+<div class="container">
+  
+  <div class="page-header">
+    Inventory <span class="highlight">Dashboard</span>
+  </div>
 
-<div class="container" id="loginBox">
-  <h2>Authentication</h2>
-  <button onclick="login()">Login / Signup</button>
+  
+  <div class="stock-panel" id="stockPanel"></div>
+
+  
+  <div class="section">
+    <h2>Withdraw Stock</h2>
+    <div class="input-group">
+      <select id="withdrawProduct"></select>
+      <input type="number" id="withdrawAmount" placeholder="Amount to withdraw" min="1">
+      <button class="btn" onclick="withdrawStock()">Withdraw</button>
+    </div>
+  </div>
+
+ 
+  <div class="section">
+    <h2>Refill Stock</h2>
+    <div class="input-group">
+      <select id="refillProduct"></select>
+      <input type="number" id="refillAmount" placeholder="Amount to add" min="1">
+      <button class="btn" onclick="refillStock()">Refill</button>
+    </div>
+  </div>
+
+  
+  <div class="section">
+    <h2>Add New Product</h2>
+    <div class="input-group">
+      <input type="text" id="newProductName" placeholder="Product Name">
+      <input type="number" id="newProductStock" placeholder="Initial Stock" min="0">
+      <button class="btn" onclick="addProduct()">Add Product</button>
+    </div>
+  </div>
 </div>
 
-<div class="container hidden" id="appBox">
-  <button onclick="logout()">Logout</button>
 
-  <h2>Add Product</h2>
-  <input id="name" placeholder="Product Name" />
-  <input id="stock" type="number" placeholder="Stock" />
-  <button onclick="addProduct()">Add Product</button>
-
-  <h2>Products</h2>
-  <button onclick="loadProducts()">Refresh</button>
-
-  <table>
-    <thead>
-      <tr>
-        <th>ID</th>
-        <th>Name</th>
-        <th>Stock</th>
-        <th>Update</th>
-        <th>Delete</th>
-      </tr>
-    </thead>
-    <tbody id="products"></tbody>
-  </table>
-</div>
+<div id="toast"></div>
 
 <script>
-  const API_BASE = "https://cdnag593k4.execute-api.ap-south-1.amazonaws.com/prod";
+const API_BASE = "https://cdnag593k4.execute-api.ap-south-1.amazonaws.com/prod";
+let products = [];
 
-  /* ================= AMPLIFY CONFIG ================= */
-  Amplify.default.configure({
-    Auth: {
-      region: "ap-south-1",
-      userPoolId: "ap-south-1_XXXXXXX",          // 🔴 CHANGE
-      userPoolWebClientId: "XXXXXXXXXXXXXXX",   // 🔴 CHANGE
-      oauth: {
-        domain: "YOUR_DOMAIN.auth.ap-south-1.amazoncognito.com", // 🔴 CHANGE
-        scope: ["email", "openid", "profile"],
-        redirectSignIn: window.location.origin,
-        redirectSignOut: window.location.origin,
-        responseType: "code"
-      }
-    }
+function showToast(message) {
+  const toast = document.getElementById('toast');
+  toast.textContent = message;
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 3000);
+}
+
+async function loadProducts() {
+  try {
+    const res = await fetch(API_BASE + "/products");
+    products = await res.json();
+
+    const withdrawSelect = document.getElementById('withdrawProduct');
+    const refillSelect = document.getElementById('refillProduct');
+    withdrawSelect.innerHTML = '';
+    refillSelect.innerHTML = '';
+    products.forEach(p => {
+      withdrawSelect.innerHTML += `<option value="${p.productId}">${p.name}</option>`;
+      refillSelect.innerHTML += `<option value="${p.productId}">${p.name}</option>`;
+    });
+
+    updateStockPanel();
+  } catch(e) {
+    showToast("Error loading products");
+    console.error(e);
+  }
+}
+
+function updateStockPanel() {
+  const panel = document.getElementById('stockPanel');
+  panel.innerHTML = '';
+  products.forEach(p => {
+    const div = document.createElement('div');
+    div.className = 'stock-item';
+    div.innerHTML = `<h3>${p.stock}</h3><div>${p.name}</div>`;
+    panel.appendChild(div);
   });
+}
 
-  const { Auth } = Amplify.default;
+async function addProduct() {
+  const name = document.getElementById('newProductName').value.trim();
+  const stock = parseInt(document.getElementById('newProductStock').value);
+  if(!name || isNaN(stock)) return showToast("Enter valid name and stock");
+  await fetch(API_BASE + "/products", { method: "POST", headers:{ "Content-Type":"application/json"}, body: JSON.stringify({name, stock})});
+  showToast("Product added");
+  loadProducts();
+}
 
-  /* ================= AUTH ================= */
+async function withdrawStock() {
+  const productId = document.getElementById('withdrawProduct').value;
+  const amount = parseInt(document.getElementById('withdrawAmount').value);
+  if(isNaN(amount) || amount <= 0) return showToast("Enter valid amount");
+  const product = products.find(p => p.productId == productId);
+  if(amount > product.stock) return showToast("Not enough stock");
+  await fetch(`${API_BASE}/products/${productId}`, { method:"PUT", headers:{ "Content-Type":"application/json"}, body: JSON.stringify({stock: product.stock - amount})});
+  showToast("Stock withdrawn");
+  loadProducts();
+}
 
-  async function login() {
-    await Auth.federatedSignIn();
-  }
+async function refillStock() {
+  const productId = document.getElementById('refillProduct').value;
+  const amount = parseInt(document.getElementById('refillAmount').value);
+  if(isNaN(amount) || amount <= 0) return showToast("Enter valid amount");
+  const product = products.find(p => p.productId == productId);
+  await fetch(`${API_BASE}/products/${productId}`, { method:"PUT", headers:{ "Content-Type":"application/json"}, body: JSON.stringify({stock: product.stock + amount})});
+  showToast("Stock refilled");
+  loadProducts();
+}
 
-  async function logout() {
-    await Auth.signOut();
-    location.reload();
-  }
+window.addEventListener('DOMContentLoaded', loadProducts);
 
-  async function getToken() {
-    const session = await Auth.currentSession();
-    return session.getIdToken().getJwtToken();
-  }
-
-  async function authHeaders() {
-    return {
-      "Content-Type": "application/json",
-      "Authorization": await getToken()
-    };
-  }
-
-  /* ================= API ================= */
-
-  async function loadProducts() {
-    const res = await fetch(API_BASE + "/products", {
-      headers: await authHeaders()
-    });
-    const data = await res.json();
-
-    const tbody = document.getElementById("products");
-    tbody.innerHTML = "";
-
-    data.forEach(p => {
-      tbody.innerHTML += `
-        <tr>
-          <td>${p.productId}</td>
-          <td>${p.name}</td>
-          <td><input type="number" value="${p.stock}" id="s-${p.productId}"/></td>
-          <td><button onclick="updateStock('${p.productId}')">Update</button></td>
-          <td><button class="danger" onclick="deleteProduct('${p.productId}')">Delete</button></td>
-        </tr>`;
-    });
-  }
-
-  async function addProduct() {
-    await fetch(API_BASE + "/products", {
-      method: "POST",
-      headers: await authHeaders(),
-      body: JSON.stringify({
-        name: document.getElementById("name").value,
-        stock: Number(document.getElementById("stock").value)
-      })
-    });
+/
+setInterval(() => {
+    showToast("Auto-refreshing stock data...");
     loadProducts();
-  }
-
-  async function updateStock(id) {
-    await fetch(`${API_BASE}/products/${id}`, {
-      method: "PUT",
-      headers: await authHeaders(),
-      body: JSON.stringify({
-        stock: Number(document.getElementById(`s-${id}`).value)
-      })
-    });
-    loadProducts();
-  }
-
-  async function deleteProduct(id) {
-    await fetch(`${API_BASE}/products/${id}`, {
-      method: "DELETE",
-      headers: await authHeaders()
-    });
-    loadProducts();
-  }
-
-  /* ================= AUTO LOGIN ================= */
-
-  Auth.currentAuthenticatedUser()
-    .then(() => {
-      document.getElementById("loginBox").classList.add("hidden");
-      document.getElementById("appBox").classList.remove("hidden");
-      loadProducts();
-    })
-    .catch(() => {});
+}, 1444400000);
 </script>
 
 </body>
