@@ -119,7 +119,7 @@
 <body>
 
 <div id="login-section">
-  <div class="page-header">Inventory <span class="highlight">Dashboard</span></div>
+  <div class="page-header" style="justify-content: center;">Inventory <span class="highlight">Dashboard</span></div>
   <p style="margin-bottom: 20px; color: #6b7280;">Please sign in to access the inventory.</p>
   <button id="signInBtn" class="btn">Sign In with AWS Cognito</button>
 </div>
@@ -178,9 +178,10 @@
       scope: "phone openid email"
   };
 
-  // Important: You must fill these in for logout to work
-  const logoutUri = "https://main.d3hlvj0pbnmql3.amplifyapp.com/"; // Usually the same as redirect_uri
-  // Note: You need to find your "User Pool Domain" in AWS Cognito Console -> App Integration -> Domain name
+  // --- SETTINGS FOR LOGOUT ---
+  const logoutUri = "https://main.d3hlvj0pbnmql3.amplifyapp.com/"; 
+  
+  // This is the domain you had in your code - it looks correct now!
   const cognitoDomain = "https://ap-south-1svvfdsac5.auth.ap-south-1.amazoncognito.com"; 
 
   const userManager = new UserManager(cognitoAuthConfig);
@@ -224,17 +225,19 @@
   });
 
   // Bind Logout Button
-  document.getElementById("signOutBtn").addEventListener("click", () => {
+  document.getElementById("signOutBtn").addEventListener("click", async () => {
       const clientId = cognitoAuthConfig.client_id;
-      // Standard Cognito Logout URL construction
-      window.location.href = `${cognitoDomain}/logout?client_id=${clientId}&logout_uri=${encodeURIComponent(logoutUri)}`;
       
-      // Fallback if domain isn't set (clears local session only)
-      userManager.removeUser(); 
+      // 1. Clear Local Session
+      await userManager.removeUser(); 
+
+      // 2. Redirect to AWS Cognito Logout
+      const logoutUrl = `${cognitoDomain}/logout?client_id=${clientId}&logout_uri=${encodeURIComponent(logoutUri)}`;
+      window.location.href = logoutUrl;
   });
 
 
-  // --- INVENTORY LOGIC (Your Original Code adapted for Modules) ---
+  // --- INVENTORY LOGIC ---
   
   const API_BASE = "https://cdnag593k4.execute-api.ap-south-1.amazonaws.com/prod";
   let products = [];
@@ -248,17 +251,12 @@
 
   async function loadProducts() {
     try {
-      // Optional: Add Auth Token to headers if your API supports it
-      // const user = await userManager.getUser();
-      // const token = user?.access_token;
-      
       const res = await fetch(API_BASE + "/products");
       products = await res.json();
 
       const withdrawSelect = document.getElementById('withdrawProduct');
       const refillSelect = document.getElementById('refillProduct');
       
-      // Save current selection to restore after refresh
       const currentWithdraw = withdrawSelect.value;
       const currentRefill = refillSelect.value;
 
@@ -291,7 +289,6 @@
     });
   }
 
-  // We must attach event listeners manually because module scope functions aren't global
   document.getElementById('btnAdd').addEventListener('click', async () => {
     const name = document.getElementById('newProductName').value.trim();
     const stock = parseInt(document.getElementById('newProductStock').value);
