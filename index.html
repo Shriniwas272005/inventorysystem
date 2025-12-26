@@ -225,7 +225,16 @@
   });
 
   // Bind Logout Button
+  document.getElementById("signOutBtn").addEventListener("click", async () => {
+      const clientId = cognitoAuthConfig.client_id;
+      
+      // 1. Clear Local Session
+      await userManager.removeUser(); 
 
+      // 2. Redirect to AWS Cognito Logout
+      const logoutUrl = `${cognitoDomain}/logout?client_id=${clientId}&logout_uri=${encodeURIComponent(logoutUri)}`;
+      window.location.href = logoutUrl;
+  });
   // Bind Logout Button
   document.getElementById("signOutBtn").addEventListener("click", async () => {
       const clientId = cognitoAuthConfig.client_id;
