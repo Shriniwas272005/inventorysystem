@@ -1,243 +1,194 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Inventory Dashboard</title>
+<meta charset="UTF-8" />
+<title>Inventory Dashboard (Cognito Secured)</title>
+
+<!-- OIDC Client (CDN) -->
+<script type="module">
+  import { UserManager } from "https://cdn.jsdelivr.net/npm/oidc-client-ts@3.0.1/dist/oidc-client-ts.min.js";
+
+  /***********************
+   * COGNITO CONFIG
+   ***********************/
+  const cognitoConfig = {
+    authority: "https://cognito-idp.ap-south-1.amazonaws.com/ap-south-1_7cYokKnU8",
+    client_id: "5le9dqqqrn1ai0ma4au0vc264s",
+    redirect_uri: window.location.origin,
+    post_logout_redirect_uri: window.location.origin,
+    response_type: "code",
+    scope: "openid email phone",
+  };
+
+  const userManager = new UserManager(cognitoConfig);
+  window.userManager = userManager;
+</script>
+
 <style>
-  
-  * { box-sizing: border-box; margin:0; padding:0; font-family: 'Poppins', 'Segoe UI', 'Roboto', sans-serif; }
-  body { background: #f4f6f8; color: #1f2937; font-size: 16px; }
-  button { cursor: pointer; transition: all 0.3s; font-family: inherit; font-weight: 500; }
-
-  input, select { 
-    padding: 12px; 
-    border: 1px solid #d1d5db; 
-    border-radius: 8px; 
-    width: 100%; 
-    font-family: inherit; 
-    font-size: 16px; 
-    transition: border-color 0.3s, box-shadow 0.3s;
-  }
-  input:focus, select:focus { border-color: #4f46e5; box-shadow: 0 0 8px rgba(79,70,229,0.2); outline: none; }
-
-  
-  .page-header {
-    font-size: 38px;
-    font-weight: 800;
-    margin-bottom: 30px;
-    text-align: left;
-    animation: fadeInScale 1s ease forwards;
-  }
-  .page-header span.highlight {
-    font-weight: 900;
-    background: linear-gradient(90deg, #f97316, #facc15);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-  }
-  @keyframes fadeInScale {
-    0% { opacity: 0; transform: scale(0.8); }
-    100% { opacity: 1; transform: scale(1); }
-  }
-
- 
-  .container { max-width: 1100px; margin: 0 auto; padding: 0 20px; }
-
- 
-  .section { 
-    background: #ffffff; 
-    border-radius: 12px; 
-    padding: 20px; 
-    margin-bottom: 20px; 
-    box-shadow: 0 3px 10px rgba(0,0,0,0.05); 
-    transition: transform 0.3s, box-shadow 0.3s;
-  }
-  .section:hover { transform: translateY(-2px); box-shadow: 0 6px 15px rgba(0,0,0,0.1); }
-  .section h2 { margin-bottom: 15px; font-size: 20px; color: #111827; font-weight: 600; }
-
- 
-  .stock-panel { display: flex; flex-wrap: wrap; gap: 15px; margin-bottom: 20px; padding: 15px; border-radius: 12px; background: #e5e7eb; }
-  .stock-item { 
-    flex: 1; 
-    min-width: 120px; 
-    text-align: center; 
-    background: #f3f4f6; 
-    border-radius: 12px; 
-    padding: 20px; 
-    box-shadow: 0 2px 6px rgba(0,0,0,0.05); 
-    transition: transform 0.3s, box-shadow 0.3s, background 0.3s;
-    cursor: default;
-    animation: fadeInUp 0.5s ease forwards;
-  }
-  .stock-item:hover { transform: translateY(-4px); box-shadow: 0 6px 12px rgba(0,0,0,0.15); background: #eef2ff; }
-  .stock-item h3 { font-size: 22px; font-weight: 700; margin-bottom: 5px; color: #111827; }
-
-  @keyframes fadeInUp {
-    0% { opacity: 0; transform: translateY(20px); }
-    100% { opacity: 1; transform: translateY(0); }
-  }
-
- 
-.btn { 
-    padding: 0 20px;
-    min-width: 120px;
-    background: #1f2937; 
-    color: white; 
-    border: none; 
-    border-radius: 8px; 
-    font-weight: 600; 
-    font-size: 16px; 
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.3s ease;
-    flex-shrink: 0;
-}
-.btn:hover { 
-    background: #374151; 
-    transform: translateY(-2px); 
-    box-shadow: 0 6px 12px rgba(0,0,0,0.3); 
-}
-
-  
-  .input-group { display: flex; gap: 10px; margin-bottom: 15px; }
-  .input-group input, .input-group select { flex: 1; }
-
-  
-  #toast { 
-    position: fixed; bottom: 30px; right: 30px; background: #111827; 
-    color: white; padding: 15px 25px; border-radius: 8px; 
-    opacity: 0; pointer-events: none; transform: translateY(20px);
-    transition: all 0.4s ease; box-shadow: 0 4px 12px rgba(0,0,0,0.2); z-index: 200; 
-  }
-  #toast.show { opacity: 1; pointer-events: auto; transform: translateY(0); }
+  * { box-sizing: border-box; font-family: Poppins, Arial, sans-serif; }
+  body { background: #f4f6f8; margin: 0; padding: 20px; }
+  .container { max-width: 1100px; margin: auto; }
+  .header { font-size: 36px; font-weight: 800; margin-bottom: 20px; }
+  .btn { background:#111827;color:white;border:none;padding:12px 20px;border-radius:8px;cursor:pointer }
+  .btn:hover { background:#374151 }
+  .stock-panel { display:flex;gap:15px;flex-wrap:wrap;margin-bottom:20px }
+  .stock-item { background:white;padding:20px;border-radius:10px;min-width:140px;text-align:center }
+  .section { background:white;padding:20px;border-radius:10px;margin-bottom:20px }
+  select,input { padding:10px;width:100%;margin-bottom:10px }
+  #toast { position:fixed;bottom:20px;right:20px;background:#111827;color:white;padding:12px 20px;border-radius:6px;display:none }
 </style>
 </head>
-<body>
 
+<body>
 <div class="container">
-  
-  <div class="page-header">
-    Inventory <span class="highlight">Dashboard</span>
+
+  <div class="header">Inventory Dashboard</div>
+
+  <div>
+    Logged in as: <strong id="email"></strong>
+    <button class="btn" onclick="logout()">Logout</button>
   </div>
 
-  
   <div class="stock-panel" id="stockPanel"></div>
 
-  
   <div class="section">
-    <h2>Withdraw Stock</h2>
-    <div class="input-group">
-      <select id="withdrawProduct"></select>
-      <input type="number" id="withdrawAmount" placeholder="Amount to withdraw" min="1">
-      <button class="btn" onclick="withdrawStock()">Withdraw</button>
-    </div>
+    <h3>Withdraw Stock</h3>
+    <select id="withdrawProduct"></select>
+    <input type="number" id="withdrawAmount" placeholder="Amount" />
+    <button class="btn" onclick="withdrawStock()">Withdraw</button>
   </div>
 
- 
   <div class="section">
-    <h2>Refill Stock</h2>
-    <div class="input-group">
-      <select id="refillProduct"></select>
-      <input type="number" id="refillAmount" placeholder="Amount to add" min="1">
-      <button class="btn" onclick="refillStock()">Refill</button>
-    </div>
+    <h3>Refill Stock</h3>
+    <select id="refillProduct"></select>
+    <input type="number" id="refillAmount" placeholder="Amount" />
+    <button class="btn" onclick="refillStock()">Refill</button>
   </div>
 
-  
   <div class="section">
-    <h2>Add New Product</h2>
-    <div class="input-group">
-      <input type="text" id="newProductName" placeholder="Product Name">
-      <input type="number" id="newProductStock" placeholder="Initial Stock" min="0">
-      <button class="btn" onclick="addProduct()">Add Product</button>
-    </div>
+    <h3>Add Product</h3>
+    <input id="newProductName" placeholder="Product Name" />
+    <input id="newProductStock" type="number" placeholder="Initial Stock" />
+    <button class="btn" onclick="addProduct()">Add</button>
   </div>
+
 </div>
-
 
 <div id="toast"></div>
 
-<script>
-const API_BASE = "https://cdnag593k4.execute-api.ap-south-1.amazonaws.com/prod";
-let products = [];
+<script type="module">
+  /***********************
+   * AUTH HANDLING
+   ***********************/
+  const API_BASE = "https://cdnag593k4.execute-api.ap-south-1.amazonaws.com/prod";
+  let products = [];
+  let accessToken = null;
 
-function showToast(message) {
-  const toast = document.getElementById('toast');
-  toast.textContent = message;
-  toast.classList.add('show');
-  setTimeout(() => toast.classList.remove('show'), 3000);
-}
+  function toast(msg) {
+    const t = document.getElementById("toast");
+    t.innerText = msg;
+    t.style.display = "block";
+    setTimeout(() => t.style.display = "none", 3000);
+  }
 
-async function loadProducts() {
-  try {
-    const res = await fetch(API_BASE + "/products");
+  async function loginIfNeeded() {
+    if (window.location.search.includes("code=")) {
+      await userManager.signinRedirectCallback();
+      window.history.replaceState({}, document.title, "/");
+    }
+
+    const user = await userManager.getUser();
+    if (!user) {
+      await userManager.signinRedirect();
+      return;
+    }
+
+    accessToken = user.access_token;
+    document.getElementById("email").innerText = user.profile.email;
+    loadProducts();
+  }
+
+  window.logout = () => {
+    const domain = "https://ap-south-17cyokknu8.auth.ap-south-1.amazoncognito.com";
+    const url =
+      `${domain}/logout?client_id=${cognitoConfig.client_id}` +
+      `&logout_uri=${encodeURIComponent(window.location.origin)}`;
+    window.location.href = url;
+  };
+
+  /***********************
+   * AUTH FETCH
+   ***********************/
+  async function authFetch(url, options = {}) {
+    return fetch(url, {
+      ...options,
+      headers: {
+        ...options.headers,
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+    });
+  }
+
+  /***********************
+   * INVENTORY LOGIC
+   ***********************/
+  async function loadProducts() {
+    const res = await authFetch(API_BASE + "/products");
     products = await res.json();
 
-    const withdrawSelect = document.getElementById('withdrawProduct');
-    const refillSelect = document.getElementById('refillProduct');
-    withdrawSelect.innerHTML = '';
-    refillSelect.innerHTML = '';
+    const w = document.getElementById("withdrawProduct");
+    const r = document.getElementById("refillProduct");
+    w.innerHTML = r.innerHTML = "";
+
     products.forEach(p => {
-      withdrawSelect.innerHTML += `<option value="${p.productId}">${p.name}</option>`;
-      refillSelect.innerHTML += `<option value="${p.productId}">${p.name}</option>`;
+      w.innerHTML += `<option value="${p.productId}">${p.name}</option>`;
+      r.innerHTML += `<option value="${p.productId}">${p.name}</option>`;
     });
 
-    updateStockPanel();
-  } catch(e) {
-    showToast("Error loading products");
-    console.error(e);
+    const panel = document.getElementById("stockPanel");
+    panel.innerHTML = "";
+    products.forEach(p => {
+      panel.innerHTML += `<div class="stock-item"><h2>${p.stock}</h2>${p.name}</div>`;
+    });
   }
-}
 
-function updateStockPanel() {
-  const panel = document.getElementById('stockPanel');
-  panel.innerHTML = '';
-  products.forEach(p => {
-    const div = document.createElement('div');
-    div.className = 'stock-item';
-    div.innerHTML = `<h3>${p.stock}</h3><div>${p.name}</div>`;
-    panel.appendChild(div);
-  });
-}
-
-async function addProduct() {
-  const name = document.getElementById('newProductName').value.trim();
-  const stock = parseInt(document.getElementById('newProductStock').value);
-  if(!name || isNaN(stock)) return showToast("Enter valid name and stock");
-  await fetch(API_BASE + "/products", { method: "POST", headers:{ "Content-Type":"application/json"}, body: JSON.stringify({name, stock})});
-  showToast("Product added");
-  loadProducts();
-}
-
-async function withdrawStock() {
-  const productId = document.getElementById('withdrawProduct').value;
-  const amount = parseInt(document.getElementById('withdrawAmount').value);
-  if(isNaN(amount) || amount <= 0) return showToast("Enter valid amount");
-  const product = products.find(p => p.productId == productId);
-  if(amount > product.stock) return showToast("Not enough stock");
-  await fetch(`${API_BASE}/products/${productId}`, { method:"PUT", headers:{ "Content-Type":"application/json"}, body: JSON.stringify({stock: product.stock - amount})});
-  showToast("Stock withdrawn");
-  loadProducts();
-}
-
-async function refillStock() {
-  const productId = document.getElementById('refillProduct').value;
-  const amount = parseInt(document.getElementById('refillAmount').value);
-  if(isNaN(amount) || amount <= 0) return showToast("Enter valid amount");
-  const product = products.find(p => p.productId == productId);
-  await fetch(`${API_BASE}/products/${productId}`, { method:"PUT", headers:{ "Content-Type":"application/json"}, body: JSON.stringify({stock: product.stock + amount})});
-  showToast("Stock refilled");
-  loadProducts();
-}
-
-window.addEventListener('DOMContentLoaded', loadProducts);
-
-
-setInterval(() => {
-    showToast("Auto-refreshing stock data...");
+  window.addProduct = async () => {
+    await authFetch(API_BASE + "/products", {
+      method: "POST",
+      body: JSON.stringify({
+        name: newProductName.value,
+        stock: +newProductStock.value
+      })
+    });
+    toast("Product added");
     loadProducts();
-}, 1444400000);
-</script>
+  };
 
+  window.withdrawStock = async () => {
+    const p = products.find(x => x.productId == withdrawProduct.value);
+    const amt = +withdrawAmount.value;
+    if (amt > p.stock) return toast("Not enough stock");
+    await authFetch(`${API_BASE}/products/${p.productId}`, {
+      method: "PUT",
+      body: JSON.stringify({ stock: p.stock - amt })
+    });
+    toast("Stock withdrawn");
+    loadProducts();
+  };
+
+  window.refillStock = async () => {
+    const p = products.find(x => x.productId == refillProduct.value);
+    const amt = +refillAmount.value;
+    await authFetch(`${API_BASE}/products/${p.productId}`, {
+      method: "PUT",
+      body: JSON.stringify({ stock: p.stock + amt })
+    });
+    toast("Stock refilled");
+    loadProducts();
+  };
+
+  loginIfNeeded();
+</script>
 </body>
 </html>
