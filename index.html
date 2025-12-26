@@ -225,17 +225,18 @@
   });
 
   // Bind Logout Button
+
+  // Bind Logout Button
   document.getElementById("signOutBtn").addEventListener("click", async () => {
       const clientId = cognitoAuthConfig.client_id;
+      // ... 
+      // DELETE THE COMPLEX LOGIC AND PASTE THIS:
       
-      // 1. Clear Local Session
       await userManager.removeUser(); 
-
-      // 2. Redirect to AWS Cognito Logout
-      const logoutUrl = `${cognitoDomain}/logout?client_id=${clientId}&logout_uri=${encodeURIComponent(logoutUri)}`;
-      window.location.href = logoutUrl;
+      
+      // HARDCODE YOUR URL HERE TO TEST:
+      window.location.href = "https://ap-south-1svvfdsac5.auth.ap-south-1.amazoncognito.com/logout?client_id=5crbg8b50ivmrvu6k4t0q94rbc&logout_uri=https://main.d3hlvj0pbnmql3.amplifyapp.com/";
   });
-
 
   // --- INVENTORY LOGIC ---
   
